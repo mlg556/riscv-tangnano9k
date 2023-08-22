@@ -1,11 +1,4 @@
-/**
- * Step 16: Creating a RISC-V processor
- *         Store
- * DONE*
- */
-
 `default_nettype none
-`include "clockworks.v"
 
 module Memory (
     input             clk,
@@ -17,22 +10,16 @@ module Memory (
 );
 
     reg [31:0] MEM[0:255];
-
-`ifdef BENCH
-    localparam slow_bit = 11;
-`else
-    localparam slow_bit = 17;
-`endif
-
     initial begin
+        $readmemh("inc_ascii.hex", MEM);
 
-        // Note: index 100 (word address)
-        //     corresponds to 
-        // address 400 (byte address)
-        MEM[100] = {8'h4, 8'h3, 8'h2, 8'h1};
-        MEM[101] = {8'h8, 8'h7, 8'h6, 8'h5};
-        MEM[102] = {8'hc, 8'hb, 8'ha, 8'h9};
-        MEM[103] = {8'hff, 8'hf, 8'he, 8'hd};
+        // // Note: index 100 (word address)
+        // //     corresponds to 
+        // // address 400 (byte address)
+        // MEM[100] = {8'h4, 8'h3, 8'h2, 8'h1};
+        // MEM[101] = {8'h8, 8'h7, 8'h6, 8'h5};
+        // MEM[102] = {8'hc, 8'hb, 8'ha, 8'h9};
+        // MEM[103] = {8'hff, 8'hf, 8'he, 8'hd};
     end
 
     wire [29:0] word_addr = mem_addr[31:2];
@@ -60,54 +47,54 @@ module Processor (
     output reg [31:0] x10 = 0
 );
 
-    reg  [31:0] PC = 0;  // program counter
-    reg  [31:0] instr;  // current instruction
+    reg     [31:0] PC = 0;  // program counter
+    reg     [31:0] instr;  // current instruction
 
     // See the table P. 105 in RISC-V manual
 
     // The 10 RISC-V instructions
-    wire        isALUreg = (instr[6:0] == 7'b0110011);  // rd <- rs1 OP rs2   
-    wire        isALUimm = (instr[6:0] == 7'b0010011);  // rd <- rs1 OP Iimm
-    wire        isBranch = (instr[6:0] == 7'b1100011);  // if(rs1 OP rs2) PC<-PC+Bimm
-    wire        isJALR = (instr[6:0] == 7'b1100111);  // rd <- PC+4; PC<-rs1+Iimm
-    wire        isJAL = (instr[6:0] == 7'b1101111);  // rd <- PC+4; PC<-PC+Jimm
-    wire        isAUIPC = (instr[6:0] == 7'b0010111);  // rd <- PC + Uimm
-    wire        isLUI = (instr[6:0] == 7'b0110111);  // rd <- Uimm   
-    wire        isLoad = (instr[6:0] == 7'b0000011);  // rd <- mem[rs1+Iimm]
-    wire        isStore = (instr[6:0] == 7'b0100011);  // mem[rs1+Simm] <- rs2
-    wire        isSYSTEM = (instr[6:0] == 7'b1110011);  // special
+    wire           isALUreg = (instr[6:0] == 7'b0110011);  // rd <- rs1 OP rs2   
+    wire           isALUimm = (instr[6:0] == 7'b0010011);  // rd <- rs1 OP Iimm
+    wire           isBranch = (instr[6:0] == 7'b1100011);  // if(rs1 OP rs2) PC<-PC+Bimm
+    wire           isJALR = (instr[6:0] == 7'b1100111);  // rd <- PC+4; PC<-rs1+Iimm
+    wire           isJAL = (instr[6:0] == 7'b1101111);  // rd <- PC+4; PC<-PC+Jimm
+    wire           isAUIPC = (instr[6:0] == 7'b0010111);  // rd <- PC + Uimm
+    wire           isLUI = (instr[6:0] == 7'b0110111);  // rd <- Uimm   
+    wire           isLoad = (instr[6:0] == 7'b0000011);  // rd <- mem[rs1+Iimm]
+    wire           isStore = (instr[6:0] == 7'b0100011);  // mem[rs1+Simm] <- rs2
+    wire           isSYSTEM = (instr[6:0] == 7'b1110011);  // special
 
     // The 5 immediate formats
-    wire [31:0] Uimm = {instr[31], instr[30:12], {12{1'b0}}};
-    wire [31:0] Iimm = {{21{instr[31]}}, instr[30:20]};
-    wire [31:0] Simm = {{21{instr[31]}}, instr[30:25], instr[11:7]};
-    wire [31:0] Bimm = {{20{instr[31]}}, instr[7], instr[30:25], instr[11:8], 1'b0};
-    wire [31:0] Jimm = {{12{instr[31]}}, instr[19:12], instr[20], instr[30:21], 1'b0};
+    wire    [31:0] Uimm = {instr[31], instr[30:12], {12{1'b0}}};
+    wire    [31:0] Iimm = {{21{instr[31]}}, instr[30:20]};
+    wire    [31:0] Simm = {{21{instr[31]}}, instr[30:25], instr[11:7]};
+    wire    [31:0] Bimm = {{20{instr[31]}}, instr[7], instr[30:25], instr[11:8], 1'b0};
+    wire    [31:0] Jimm = {{12{instr[31]}}, instr[19:12], instr[20], instr[30:21], 1'b0};
 
     // Source and destination registers
-    wire [ 4:0] rs1Id = instr[19:15];
-    wire [ 4:0] rs2Id = instr[24:20];
-    wire [ 4:0] rdId = instr[11:7];
+    wire    [ 4:0] rs1Id = instr[19:15];
+    wire    [ 4:0] rs2Id = instr[24:20];
+    wire    [ 4:0] rdId = instr[11:7];
 
     // function codes
-    wire [ 2:0] funct3 = instr[14:12];
-    wire [ 6:0] funct7 = instr[31:25];
+    wire    [ 2:0] funct3 = instr[14:12];
+    wire    [ 6:0] funct7 = instr[31:25];
 
     // The registers bank
-    reg  [31:0] RegisterBank                                                          [0:31];
-    reg  [31:0] rs1;  // value of source
-    reg  [31:0] rs2;  //  registers.
-    wire [31:0] writeBackData;  // data to be written to rd
-    wire        writeBackEn;  // asserted if data should be written to rd
+    reg     [31:0] RegisterBank                                                          [0:31];
+    reg     [31:0] rs1;  // value of source
+    reg     [31:0] rs2;  //  registers.
+    wire    [31:0] writeBackData;  // data to be written to rd
+    wire           writeBackEn;  // asserted if data should be written to rd
 
-`ifdef BENCH
-    integer i;
+    // `ifdef BENCH
+    integer        i;
     initial begin
-        for (i = 0; i < 32; ++i) begin
+        for (i = 0; i < 32; i++) begin
             RegisterBank[i] = 0;
         end
     end
-`endif
+    // `endif
 
     // The ALU
     wire [31:0] aluIn1 = rs1;
@@ -172,8 +159,6 @@ module Processor (
     /* verilator lint_on WIDTH */
 
     wire [31:0] leftshift = flip32(shifter);
-
-
 
     // ADD/SUB/ADDI: 
     // funct7[5] is 1 for SUB and 0 for ADD. We need also to test instr[5]
@@ -331,9 +316,9 @@ module Processor (
                         PC <= nextPC;
                     end
                     state <= isLoad ? LOAD : isStore ? STORE : FETCH_INSTR;
-`ifdef BENCH
-                    if (isSYSTEM) $finish();
-`endif
+                    // `ifdef BENCH
+                    //if (isSYSTEM) $finish();
+                    // `endif
                 end
                 LOAD: begin
                     state <= WAIT_DATA;
@@ -356,16 +341,11 @@ module Processor (
 endmodule
 
 
-module SOC (
-    input        CLK,    // system clock 
-    input        RESET,  // reset button
-    output [4:0] LEDS,   // system LEDs
-    input        RXD,    // UART receive
-    output       TXD     // UART transmit
+module soc (
+    input        clk,   // system clock 
+    input        btn1,  // reset button
+    output [5:0] led    // system LEDs
 );
-
-    wire clk;
-    wire resetn;
 
     wire [31:0] mem_addr;
     wire [31:0] mem_rdata;
@@ -386,7 +366,7 @@ module SOC (
 
     Processor CPU (
         .clk(clk),
-        .resetn(resetn),
+        .resetn(1'b1),
         .mem_addr(mem_addr),
         .mem_rdata(mem_rdata),
         .mem_rstrb(mem_rstrb),
@@ -395,16 +375,7 @@ module SOC (
         .x10(x10)
     );
 
-
-    // Gearbox and reset circuitry.
-    Clockworks CW (
-        .CLK(CLK),
-        .RESET(RESET),
-        .clk(clk),
-        .resetn(resetn)
-    );
-
-    assign LEDS = x10[4:0];
-    assign TXD  = 1'b0;  // not used for now
+    assign led = ~x10[5:0];
+    // assign TXD = 1'b0;  // not used for now
 
 endmodule
