@@ -1,0 +1,1 @@
+openFPGALoader -b tangnano9k C:/Users/mirac/Documents/gowin_femto/impl/pnr/gowin_femto.fs -f 

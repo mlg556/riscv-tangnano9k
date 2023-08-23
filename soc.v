@@ -1,4 +1,4 @@
-`default_nettype none
+// `default_nettype none
 
 module Memory (
     input             clk,
@@ -12,14 +12,6 @@ module Memory (
     reg [31:0] MEM[0:255];
     initial begin
         $readmemh("inc_ascii.hex", MEM);
-
-        // // Note: index 100 (word address)
-        // //     corresponds to 
-        // // address 400 (byte address)
-        // MEM[100] = {8'h4, 8'h3, 8'h2, 8'h1};
-        // MEM[101] = {8'h8, 8'h7, 8'h6, 8'h5};
-        // MEM[102] = {8'hc, 8'hb, 8'ha, 8'h9};
-        // MEM[103] = {8'hff, 8'hf, 8'he, 8'hd};
     end
 
     wire [29:0] word_addr = mem_addr[31:2];
@@ -87,14 +79,15 @@ module Processor (
     wire    [31:0] writeBackData;  // data to be written to rd
     wire           writeBackEn;  // asserted if data should be written to rd
 
-    // `ifdef BENCH
     integer        i;
+
+`ifdef BENCH
     initial begin
         for (i = 0; i < 32; i++) begin
             RegisterBank[i] = 0;
         end
     end
-    // `endif
+`endif
 
     // The ALU
     wire [31:0] aluIn1 = rs1;
@@ -342,9 +335,8 @@ endmodule
 
 
 module soc (
-    input        clk,   // system clock 
-    input        btn1,  // reset button
-    output [5:0] led    // system LEDs
+    input        clk,  // system clock 
+    output [5:0] led   // system LEDs
 );
 
     wire [31:0] mem_addr;
