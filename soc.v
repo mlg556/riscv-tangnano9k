@@ -11,7 +11,7 @@ module Memory (
 
     reg [31:0] MEM[0:255];
     initial begin
-        $readmemh("inc_ascii.hex", MEM);
+        $readmemh("readwrite_ascii.hex", MEM);
     end
 
     wire [29:0] word_addr = mem_addr[31:2];
@@ -366,6 +366,10 @@ module soc (
         .mem_wmask(mem_wmask),
         .x10(x10)
     );
+
+    // `ifdef BENCH
+    //     assign led = x10[5:0];
+    // `endif
 
     assign led = ~x10[5:0];
     // assign TXD = 1'b0;  // not used for now
