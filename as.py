@@ -1,4 +1,4 @@
-# using bronzebeard
+# basically a wrapper around bronzebeard
 
 from subprocess import Popen, PIPE
 from sys import argv, exit
