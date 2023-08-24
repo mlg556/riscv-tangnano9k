@@ -9,9 +9,9 @@ module Memory (
     input      [ 3:0] mem_wmask   // masks for writing the 4 bytes (1=write byte) 
 );
 
-    reg [31:0] MEM[0:255];
+    reg [31:0] MEM[0:1535];  // 1536 4-bytes words = 6 Kb of RAM in total
     initial begin
-        $readmemh("readwrite_ascii.hex", MEM);
+        $readmemh("uart_ascii.hex", MEM);
     end
 
     wire [29:0] word_addr = mem_addr[31:2];
@@ -29,59 +29,58 @@ endmodule
 
 
 module Processor (
-    input             clk,
-    input             resetn,
-    output     [31:0] mem_addr,
-    input      [31:0] mem_rdata,
-    output            mem_rstrb,
-    output     [31:0] mem_wdata,
-    output     [ 3:0] mem_wmask,
-    output reg [31:0] x10 = 0
+    input         clk,
+    input         resetn,
+    output [31:0] mem_addr,
+    input  [31:0] mem_rdata,
+    output        mem_rstrb,
+    output [31:0] mem_wdata,
+    output [ 3:0] mem_wmask
 );
 
-    reg     [31:0] PC = 0;  // program counter
-    reg     [31:0] instr;  // current instruction
+    reg  [31:0] PC = 0;  // program counter
+    reg  [31:0] instr;  // current instruction
 
     // See the table P. 105 in RISC-V manual
 
     // The 10 RISC-V instructions
-    wire           isALUreg = (instr[6:0] == 7'b0110011);  // rd <- rs1 OP rs2   
-    wire           isALUimm = (instr[6:0] == 7'b0010011);  // rd <- rs1 OP Iimm
-    wire           isBranch = (instr[6:0] == 7'b1100011);  // if(rs1 OP rs2) PC<-PC+Bimm
-    wire           isJALR = (instr[6:0] == 7'b1100111);  // rd <- PC+4; PC<-rs1+Iimm
-    wire           isJAL = (instr[6:0] == 7'b1101111);  // rd <- PC+4; PC<-PC+Jimm
-    wire           isAUIPC = (instr[6:0] == 7'b0010111);  // rd <- PC + Uimm
-    wire           isLUI = (instr[6:0] == 7'b0110111);  // rd <- Uimm   
-    wire           isLoad = (instr[6:0] == 7'b0000011);  // rd <- mem[rs1+Iimm]
-    wire           isStore = (instr[6:0] == 7'b0100011);  // mem[rs1+Simm] <- rs2
-    wire           isSYSTEM = (instr[6:0] == 7'b1110011);  // special
+    wire        isALUreg = (instr[6:0] == 7'b0110011);  // rd <- rs1 OP rs2   
+    wire        isALUimm = (instr[6:0] == 7'b0010011);  // rd <- rs1 OP Iimm
+    wire        isBranch = (instr[6:0] == 7'b1100011);  // if(rs1 OP rs2) PC<-PC+Bimm
+    wire        isJALR = (instr[6:0] == 7'b1100111);  // rd <- PC+4; PC<-rs1+Iimm
+    wire        isJAL = (instr[6:0] == 7'b1101111);  // rd <- PC+4; PC<-PC+Jimm
+    wire        isAUIPC = (instr[6:0] == 7'b0010111);  // rd <- PC + Uimm
+    wire        isLUI = (instr[6:0] == 7'b0110111);  // rd <- Uimm   
+    wire        isLoad = (instr[6:0] == 7'b0000011);  // rd <- mem[rs1+Iimm]
+    wire        isStore = (instr[6:0] == 7'b0100011);  // mem[rs1+Simm] <- rs2
+    wire        isSYSTEM = (instr[6:0] == 7'b1110011);  // special
 
     // The 5 immediate formats
-    wire    [31:0] Uimm = {instr[31], instr[30:12], {12{1'b0}}};
-    wire    [31:0] Iimm = {{21{instr[31]}}, instr[30:20]};
-    wire    [31:0] Simm = {{21{instr[31]}}, instr[30:25], instr[11:7]};
-    wire    [31:0] Bimm = {{20{instr[31]}}, instr[7], instr[30:25], instr[11:8], 1'b0};
-    wire    [31:0] Jimm = {{12{instr[31]}}, instr[19:12], instr[20], instr[30:21], 1'b0};
+    wire [31:0] Uimm = {instr[31], instr[30:12], {12{1'b0}}};
+    wire [31:0] Iimm = {{21{instr[31]}}, instr[30:20]};
+    wire [31:0] Simm = {{21{instr[31]}}, instr[30:25], instr[11:7]};
+    wire [31:0] Bimm = {{20{instr[31]}}, instr[7], instr[30:25], instr[11:8], 1'b0};
+    wire [31:0] Jimm = {{12{instr[31]}}, instr[19:12], instr[20], instr[30:21], 1'b0};
 
     // Source and destination registers
-    wire    [ 4:0] rs1Id = instr[19:15];
-    wire    [ 4:0] rs2Id = instr[24:20];
-    wire    [ 4:0] rdId = instr[11:7];
+    wire [ 4:0] rs1Id = instr[19:15];
+    wire [ 4:0] rs2Id = instr[24:20];
+    wire [ 4:0] rdId = instr[11:7];
 
     // function codes
-    wire    [ 2:0] funct3 = instr[14:12];
-    wire    [ 6:0] funct7 = instr[31:25];
+    wire [ 2:0] funct3 = instr[14:12];
+    wire [ 6:0] funct7 = instr[31:25];
 
     // The registers bank
-    reg     [31:0] RegisterBank                                                          [0:31];
-    reg     [31:0] rs1;  // value of source
-    reg     [31:0] rs2;  //  registers.
-    wire    [31:0] writeBackData;  // data to be written to rd
-    wire           writeBackEn;  // asserted if data should be written to rd
-
-    integer        i;
+    reg  [31:0] RegisterBank                                                          [0:31];
+    reg  [31:0] rs1;  // value of source
+    reg  [31:0] rs2;  //  registers.
+    wire [31:0] writeBackData;  // data to be written to rd
+    wire        writeBackEn;  // asserted if data should be written to rd
 
 `ifdef BENCH
+    integer i;
+
     initial begin
         for (i = 0; i < 32; i++) begin
             RegisterBank[i] = 0;
@@ -287,9 +286,9 @@ module Processor (
                 RegisterBank[rdId] <= writeBackData;
                 // $display("r%0d <= %b",rdId,writeBackData);
                 // For displaying what happens.
-                if (rdId == 10) begin
-                    x10 <= writeBackData;
-                end
+                // if (rdId == 10) begin
+                //     x10 <= writeBackData;
+                // end
             end
             case (state)
                 FETCH_INSTR: begin
@@ -333,28 +332,54 @@ module Processor (
 
 endmodule
 
+module corescore_emitter_uart #(
+    parameter clk_freq_hz = 0,
+    parameter baud_rate   = 57600
+) (
+    input  wire       i_clk,
+    input  wire       i_rst,
+    input  wire [7:0] i_data,
+    input  wire       i_valid,
+    output reg        o_ready,
+    output wire       o_uart_tx
+);
+
+    localparam START_VALUE = clk_freq_hz / baud_rate;
+
+    localparam WIDTH = $clog2(START_VALUE);
+
+    reg [WIDTH:0] cnt = 0;
+
+    reg [    9:0] data = 0;
+
+    assign o_uart_tx = data[0] | !(|data);
+
+    always @(posedge i_clk) begin
+        if (cnt[WIDTH] & !(|data)) o_ready <= 1'b1;
+        else if (i_valid & o_ready) o_ready <= 1'b0;
+
+        if (o_ready | cnt[WIDTH]) cnt <= {1'b0, START_VALUE[WIDTH-1:0]};
+        else cnt <= cnt - 1;
+
+        if (cnt[WIDTH]) data <= {1'b0, data[9:1]};
+        else if (i_valid & o_ready) data <= {1'b1, i_data, 1'b0};
+    end
+
+endmodule
+
 
 module soc (
-    input        clk,  // system clock 
-    output [5:0] led   // system LEDs
+    input            clk,  // system clock
+    input            rx,
+    output           tx,
+    output reg [5:0] led   // system LEDs
 );
 
     wire [31:0] mem_addr;
     wire [31:0] mem_rdata;
-    wire mem_rstrb;
+    wire        mem_rstrb;
     wire [31:0] mem_wdata;
-    wire [3:0] mem_wmask;
-
-    Memory RAM (
-        .clk(clk),
-        .mem_addr(mem_addr),
-        .mem_rdata(mem_rdata),
-        .mem_rstrb(mem_rstrb),
-        .mem_wdata(mem_wdata),
-        .mem_wmask(mem_wmask)
-    );
-
-    wire [31:0] x10;
+    wire [ 3:0] mem_wmask;
 
     Processor CPU (
         .clk(clk),
@@ -363,15 +388,66 @@ module soc (
         .mem_rdata(mem_rdata),
         .mem_rstrb(mem_rstrb),
         .mem_wdata(mem_wdata),
-        .mem_wmask(mem_wmask),
-        .x10(x10)
+        .mem_wmask(mem_wmask)
     );
+
+    wire [31:0] RAM_rdata;
+    wire [29:0] mem_wordaddr = mem_addr[31:2];
+    wire        isIO = mem_addr[22];
+    wire        isRAM = !isIO;
+    wire        mem_wstrb = |mem_wmask;
+
+    Memory RAM (
+        .clk(clk),
+        .mem_addr(mem_addr),
+        .mem_rdata(RAM_rdata),
+        .mem_rstrb(isRAM & mem_rstrb),
+        .mem_wdata(mem_wdata),
+        .mem_wmask({4{isRAM}} & mem_wmask)
+    );
+
+    // Memory-mapped IO in IO page, 1-hot addressing in word address.   
+    localparam IO_LEDS_bit = 0;  // W five leds
+    localparam IO_UART_DAT_bit = 1;  // W data to send (8 bits) 
+    localparam IO_UART_CNTL_bit = 2;  // R status. bit 9: busy sending
+
+    always @(posedge clk) begin
+        if (isIO & mem_wstrb & mem_wordaddr[IO_LEDS_bit]) begin
+            led <= mem_wdata[5:0];
+        end
+    end
+
+    wire uart_valid = isIO & mem_wstrb & mem_wordaddr[IO_UART_DAT_bit];
+    wire uart_ready;
+
+    corescore_emitter_uart #(
+        .clk_freq_hz(27_000_000),
+        .baud_rate  (115_200)
+    ) UART (
+        .i_clk(clk),
+        .i_rst(1'b0),
+        .i_data(mem_wdata[7:0]),
+        .i_valid(uart_valid),
+        .o_ready(uart_ready),
+        .o_uart_tx(tx)
+    );
+
+    wire [31:0] IO_rdata = mem_wordaddr[IO_UART_CNTL_bit] ? {22'b0, !uart_ready, 9'b0} : 32'b0;
+    assign mem_rdata = isRAM ? RAM_rdata : IO_rdata;
+
+`ifdef BENCH
+    always @(posedge clk) begin
+        if (uart_valid) begin
+            $write("%c", mem_wdata[7:0]);
+            $fflush(32'h8000_0001);
+        end
+    end
+`endif
+
 
     // `ifdef BENCH
     //     assign led = x10[5:0];
     // `endif
-
-    assign led = ~x10[5:0];
     // assign TXD = 1'b0;  // not used for now
 
 endmodule
