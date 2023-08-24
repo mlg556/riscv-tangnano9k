@@ -8,7 +8,7 @@ LEDS = 4
 UART_DAT = 8
 UART_CNTL = 16
 
-T = 19 # delay 2**T cycles, 2**20 ~ 1M
+T = 20 # delay 2**T cycles, 2**20 ~ 1M
 
     tail setup # !!!
 
