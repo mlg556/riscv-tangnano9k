@@ -18,7 +18,7 @@ module soc_tb ();
         $dumpfile("soc_tb.vcd");
         $dumpvars(0, soc_tb);
 
-        $monitor("%d", led);
+        //$monitor("%d", led);
 
         #500_000 $finish;  // just in case
 

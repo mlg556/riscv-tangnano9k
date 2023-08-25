@@ -9,7 +9,7 @@ getc:
     lw a0, UART_CTRL(gp)
     # write to led
     # sw a0, LEDS(gp)
-    bnez a0, getc
+    beqz a0, getc
     # data is ready to read
     lb a0, UART_RX(gp)
     sw a0, LEDS(gp)

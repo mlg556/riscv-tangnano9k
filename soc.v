@@ -12,7 +12,7 @@ module Memory (
 
     reg [31:0] MEM[0:1535];  // 1536 4-bytes words = 6 Kb of RAM in total
     initial begin
-        $readmemh("uart_rx_ascii.hex", MEM);
+        $readmemh("uart_echo_ascii.hex", MEM);
     end
 
     wire [29:0] word_addr = mem_addr[31:2];
@@ -38,6 +38,7 @@ module Processor (
     output [31:0] mem_wdata,
     output [ 3:0] mem_wmask
 );
+
 
     reg  [31:0] PC = 0;  // program counter
     reg  [31:0] instr;  // current instruction
@@ -81,11 +82,12 @@ module Processor (
 
 `ifdef BENCH
     integer i;
-
     initial begin
         for (i = 0; i < 32; i++) begin
             RegisterBank[i] = 0;
         end
+
+        $monitor("PC: %d", PC);
     end
 `endif
 
@@ -400,7 +402,7 @@ module soc (
         .i_Clock(clk),
         .i_Tx_DV(uart_tx_en),
         .i_Tx_Byte(mem_wdata[7:0]),
-        .o_Tx_Done(uart_tx_done),
+        .o_Tx_Active(uart_tx_done),
         .o_Tx_Serial(tx)
     );
 
@@ -419,7 +421,7 @@ module soc (
     // assign IO_rdata[1] = mem_wordaddr[IO_UART_CTRL] ? {uart_rx_done} : 1'b0;
 
     assign IO_rdata =   mem_wordaddr[IO_UART_RX_DATA_bit] ? uart_rx_data :
-                        mem_wordaddr[IO_UART_CTRL] ? {31'b0, uart_tx_done} :
+                        mem_wordaddr[IO_UART_CTRL] ? {31'b0, ~uart_tx_done} :
                         mem_wordaddr[IO_UART_CTRL] ? {30'b0, uart_rx_done, 1'b0} :
                         32'b0;
 

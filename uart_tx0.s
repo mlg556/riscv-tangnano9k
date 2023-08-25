@@ -12,18 +12,36 @@ UART_CTRL = 32
 
 T = 5 # delay 2**T cycles, 2**20 ~ 1M
 
+    tail setup # !!!
+
+DATA:
+    string helo
+
+align 4
 
 setup:
     li gp, IO
     li sp, 0
 loop:
-    li a0, 104
+    lb a0, DATA(sp)
     call putc
     call putled
+    call delay
 
-    li a0, 105
+    lb a0, DATA+1(sp)
     call putc
     call putled
+    call delay
+
+    lb a0, DATA+2(sp)
+    call putc
+    call putled
+    call delay
+
+    lb a0, DATA+3(sp)
+    call putc
+    call putled
+    call delay
 
     j loop
 
@@ -33,9 +51,19 @@ putc: # a0 is the 32-bit char
     # UART_CTRL bit0 is set => tx complete
 _l0_putc:
     lw t1, UART_CTRL(gp)
-    beqz t1, _l0_putc
+    bnez t1, _l0_putc
     ret
 
 putled:
     sw a0, LEDS(gp)
+    ret
+
+delay:
+    li t0, 1
+    slli t0, t0, T
+_l0_delay:
+    beqz t0, _end_delay
+    addi t0, t0, -1
+    j _l0_delay
+_end_delay:
     ret
