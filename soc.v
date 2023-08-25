@@ -1,5 +1,5 @@
 // `default_nettype none
-`include "uart_tx.v"
+`include "uart.v"
 
 module Memory (
     input             clk,
@@ -12,7 +12,7 @@ module Memory (
 
     reg [31:0] MEM[0:1535];  // 1536 4-bytes words = 6 Kb of RAM in total
     initial begin
-        $readmemh("uart_ascii.hex", MEM);
+        $readmemh("uart_rx_ascii.hex", MEM);
     end
 
     wire [29:0] word_addr = mem_addr[31:2];
@@ -376,7 +376,8 @@ module soc (
     // Memory-mapped IO in IO page, 1-hot addressing in word address.   
     localparam IO_LEDS_bit = 0;  // W five leds
     localparam IO_UART_TX_DATA_bit = 1;  // W data to send (8 bits) 
-    localparam IO_UART_CTRL = 2;  // R status. bit 0: busy sending
+    localparam IO_UART_RX_DATA_bit = 2;  // W data to send (8 bits) 
+    localparam IO_UART_CTRL = 3;  // R status. bit 0: busy sending
 
     // if it's an IO address (bit22=1) AND it's a write AND the address is LEDS
     always @(posedge clk) begin
@@ -385,23 +386,44 @@ module soc (
         end
     end
 
-    // if it's an IO address (bit22=1) AND it's a write AND the address is LEDS
-    wire uart_tx_valid = isIO & mem_wstrb & mem_wordaddr[IO_UART_TX_DATA_bit];
+    // if it's an IO address (bit22=1) AND it's a write AND the address is uart_tx device
+    wire uart_tx_en = isIO & mem_wstrb & mem_wordaddr[IO_UART_TX_DATA_bit];
+    // if it's an IO address (bit22=1) AND it's a read AND the address is uart_rx device
+    // wire uart_rx_en = isIO & ~mem_wstrb & mem_wordaddr[IO_UART_RX_DATA_bit];
+
     wire uart_tx_done;
+    wire uart_rx_done;
+
+    wire [7:0] uart_rx_data;
 
     uart_tx UART_TX (
         .i_Clock(clk),
-        .i_Tx_DV(uart_tx_valid),
+        .i_Tx_DV(uart_tx_en),
         .i_Tx_Byte(mem_wdata[7:0]),
         .o_Tx_Done(uart_tx_done),
         .o_Tx_Serial(tx)
     );
 
-    wire [31:0] IO_rdata;
-    // reading UART_TX_DONE_bit
-    assign IO_rdata[0] = mem_wordaddr[IO_UART_CTRL] ? {uart_tx_done} : 1'b0;
+    uart_rx UART_RX (
+        .i_Clock(clk),
+        .i_Rx_Serial(rx),
+        .o_Rx_DV(uart_rx_done),
+        .o_Rx_Byte(uart_rx_data)
+    );
 
-    assign mem_rdata   = isRAM ? RAM_rdata : IO_rdata;
+    wire [31:0] IO_rdata;
+    // reading IO_UART_CTRL
+    // // bit0 is tx_one
+    // assign IO_rdata[0] = mem_wordaddr[IO_UART_CTRL] ? {uart_tx_done} : 1'b0;
+    // // bit1 is rx done
+    // assign IO_rdata[1] = mem_wordaddr[IO_UART_CTRL] ? {uart_rx_done} : 1'b0;
+
+    assign IO_rdata =   mem_wordaddr[IO_UART_RX_DATA_bit] ? uart_rx_data :
+                        mem_wordaddr[IO_UART_CTRL] ? {31'b0, uart_tx_done} :
+                        mem_wordaddr[IO_UART_CTRL] ? {30'b0, uart_rx_done, 1'b0} :
+                        32'b0;
+
+    assign mem_rdata = isRAM ? RAM_rdata : IO_rdata;
 
 
 endmodule
