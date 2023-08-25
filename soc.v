@@ -1,4 +1,5 @@
 // `default_nettype none
+`include "uart_tx.v"
 
 module Memory (
     input             clk,
@@ -332,40 +333,6 @@ module Processor (
 
 endmodule
 
-module corescore_emitter_uart #(
-    parameter clk_freq_hz = 0,
-    parameter baud_rate   = 57600
-) (
-    input  wire       i_clk,
-    input  wire       i_rst,
-    input  wire [7:0] i_data,
-    input  wire       i_valid,
-    output reg        o_ready,
-    output wire       o_uart_tx
-);
-
-    localparam START_VALUE = clk_freq_hz / baud_rate;
-
-    localparam WIDTH = $clog2(START_VALUE);
-
-    reg [WIDTH:0] cnt = 0;
-
-    reg [    9:0] data = 0;
-
-    assign o_uart_tx = data[0] | !(|data);
-
-    always @(posedge i_clk) begin
-        if (cnt[WIDTH] & !(|data)) o_ready <= 1'b1;
-        else if (i_valid & o_ready) o_ready <= 1'b0;
-
-        if (o_ready | cnt[WIDTH]) cnt <= {1'b0, START_VALUE[WIDTH-1:0]};
-        else cnt <= cnt - 1;
-
-        if (cnt[WIDTH]) data <= {1'b0, data[9:1]};
-        else if (i_valid & o_ready) data <= {1'b1, i_data, 1'b0};
-    end
-
-endmodule
 
 
 module soc (
@@ -408,46 +375,39 @@ module soc (
 
     // Memory-mapped IO in IO page, 1-hot addressing in word address.   
     localparam IO_LEDS_bit = 0;  // W five leds
-    localparam IO_UART_DAT_bit = 1;  // W data to send (8 bits) 
-    localparam IO_UART_CNTL_bit = 2;  // R status. bit 9: busy sending
+    localparam IO_UART_TX_DATA_bit = 1;  // W data to send (8 bits) 
+    localparam IO_UART_TX_DONE_bit = 2;  // R status. bit 0: busy sending
 
+    // if it's an IO address (bit22=1) AND it's a write AND the address is LEDS
     always @(posedge clk) begin
         if (isIO & mem_wstrb & mem_wordaddr[IO_LEDS_bit]) begin
             led <= mem_wdata[5:0];
         end
     end
 
-    wire uart_valid = isIO & mem_wstrb & mem_wordaddr[IO_UART_DAT_bit];
-    wire uart_ready;
+    // if it's an IO address (bit22=1) AND it's a write AND the address is LEDS
+    wire uart_tx_valid = isIO & mem_wstrb & mem_wordaddr[IO_UART_TX_DATA_bit];
+    wire uart_tx_done;
 
-    corescore_emitter_uart #(
-        .clk_freq_hz(27_000_000),
-        .baud_rate  (115_200)
-    ) UART (
-        .i_clk(clk),
-        .i_rst(1'b0),
-        .i_data(mem_wdata[7:0]),
-        .i_valid(uart_valid),
-        .o_ready(uart_ready),
-        .o_uart_tx(tx)
+    uart_tx UART_TX (
+        .i_Clock(clk),
+        .i_Tx_DV(uart_tx_valid),
+        .i_Tx_Byte(mem_wdata[7:0]),
+        .o_Tx_Done(uart_tx_done),
+        .o_Tx_Serial(tx)
     );
 
-    wire [31:0] IO_rdata = mem_wordaddr[IO_UART_CNTL_bit] ? {22'b0, !uart_ready, 9'b0} : 32'b0;
-    assign mem_rdata = isRAM ? RAM_rdata : IO_rdata;
+    // always @(*) begin
+    //     if (mem_wordaddr[IO_UART_TX_DONE_bit]) IO_rdata[0] <= uart_tx_done;
+    // end
 
-`ifdef BENCH
-    always @(posedge clk) begin
-        if (uart_valid) begin
-            $write("%c", mem_wdata[7:0]);
-            $fflush(32'h8000_0001);
-        end
-    end
-`endif
+    // wire [31:0] IO_rdata = mem_wordaddr[IO_UART_TX_DONE_bit] ? {22'b0, uart_tx_done, 9'b0} : 32'b0;
 
+    wire [31:0] IO_rdata;
+    // reading UART_TX_DONE_bit
+    assign IO_rdata[0] = mem_wordaddr[IO_UART_TX_DONE_bit] ? {uart_tx_done} : 1'b0;
 
-    // `ifdef BENCH
-    //     assign led = x10[5:0];
-    // `endif
-    // assign TXD = 1'b0;  // not used for now
+    assign mem_rdata   = isRAM ? RAM_rdata : IO_rdata;
+
 
 endmodule

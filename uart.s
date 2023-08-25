@@ -13,34 +13,42 @@ T = 20 # delay 2**T cycles, 2**20 ~ 1M
     tail setup # !!!
 
 DATA:
-    string hello
+    string helo
 
 align 4
 
 setup:
     li gp, IO
-loop:
     li sp, 0
-
-send:
+loop:
     lb a0, DATA(sp)
     call putc
     call putled
-    addi sp, sp, 1
-
-    bnez a0, send
     call delay
-    j loop
 
+    lb a0, DATA+1(sp)
+    call putc
+    call putled
+    call delay
+
+    lb a0, DATA+2(sp)
+    call putc
+    call putled
+    call delay
+
+    lb a0, DATA+3(sp)
+    call putc
+    call putled
+    call delay
+
+    j loop
 
 putc: # a0 is the 32-bit char
     # send char
     sw a0, UART_DAT(gp)
-    # Read UART status (bit 9)
-    li t0, 1<<9
+    # UART_CNTL bit0 is set => tx complete
 _l0_putc:
     lw t1, UART_CNTL(gp)
-    and  t1, t1, t0
     bnez t1, _l0_putc
     ret
 
