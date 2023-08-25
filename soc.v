@@ -376,7 +376,7 @@ module soc (
     // Memory-mapped IO in IO page, 1-hot addressing in word address.   
     localparam IO_LEDS_bit = 0;  // W five leds
     localparam IO_UART_TX_DATA_bit = 1;  // W data to send (8 bits) 
-    localparam IO_UART_TX_DONE_bit = 2;  // R status. bit 0: busy sending
+    localparam IO_UART_CTRL = 2;  // R status. bit 0: busy sending
 
     // if it's an IO address (bit22=1) AND it's a write AND the address is LEDS
     always @(posedge clk) begin
@@ -397,15 +397,9 @@ module soc (
         .o_Tx_Serial(tx)
     );
 
-    // always @(*) begin
-    //     if (mem_wordaddr[IO_UART_TX_DONE_bit]) IO_rdata[0] <= uart_tx_done;
-    // end
-
-    // wire [31:0] IO_rdata = mem_wordaddr[IO_UART_TX_DONE_bit] ? {22'b0, uart_tx_done, 9'b0} : 32'b0;
-
     wire [31:0] IO_rdata;
     // reading UART_TX_DONE_bit
-    assign IO_rdata[0] = mem_wordaddr[IO_UART_TX_DONE_bit] ? {uart_tx_done} : 1'b0;
+    assign IO_rdata[0] = mem_wordaddr[IO_UART_CTRL] ? {uart_tx_done} : 1'b0;
 
     assign mem_rdata   = isRAM ? RAM_rdata : IO_rdata;
 

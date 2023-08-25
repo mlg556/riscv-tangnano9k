@@ -1,12 +1,13 @@
-# // Memory-mapped IO in IO page, 1-hot addressing in word address.   
-# localparam IO_LEDS_bit = 0;  // W five leds
-# localparam IO_UART_DAT_bit = 1;  // W data to send (8 bits) 
-# localparam IO_UART_CNTL_bit = 2;  // R status. bit 9: busy sending
+// Memory-mapped IO in IO page, 1-hot addressing in word address.   
+//localparam IO_LEDS_bit = 0;  // W five leds
+//localparam IO_UART_TX_DATA_bit = 1;  // W data to send (8 bits) 
+//localparam IO_UART_CTRL = 2;  // R status. bit 0: busy sending
+
 
 IO = 0x400000
 LEDS = 4
 UART_DAT = 8
-UART_CNTL = 16
+UART_CTRL = 16
 
 T = 20 # delay 2**T cycles, 2**20 ~ 1M
 
@@ -46,9 +47,9 @@ loop:
 putc: # a0 is the 32-bit char
     # send char
     sw a0, UART_DAT(gp)
-    # UART_CNTL bit0 is set => tx complete
+    # UART_CTRL bit0 is set => tx complete
 _l0_putc:
-    lw t1, UART_CNTL(gp)
+    lw t1, UART_CTRL(gp)
     bnez t1, _l0_putc
     ret
 
