@@ -414,15 +414,12 @@ module soc (
     );
 
     wire [31:0] IO_rdata;
-    // reading IO_UART_CTRL
-    // // bit0 is tx_one
-    // assign IO_rdata[0] = mem_wordaddr[IO_UART_CTRL] ? {uart_tx_done} : 1'b0;
-    // // bit1 is rx done
-    // assign IO_rdata[1] = mem_wordaddr[IO_UART_CTRL] ? {uart_rx_done} : 1'b0;
+
+    // bit0 set -> tx done (not active)
+    // bit1 set -> rx done
 
     assign IO_rdata =   mem_wordaddr[IO_UART_RX_DATA_bit] ? uart_rx_data :
-                        mem_wordaddr[IO_UART_CTRL] ? {31'b0, ~uart_tx_done} :
-                        mem_wordaddr[IO_UART_CTRL] ? {30'b0, uart_rx_done, 1'b0} :
+                        mem_wordaddr[IO_UART_CTRL] ? {30'b0, uart_rx_done, !uart_tx_done} :
                         32'b0;
 
     assign mem_rdata = isRAM ? RAM_rdata : IO_rdata;

@@ -4,7 +4,7 @@
 // This file contains the UART Receiver.  This receiver is able to
 // receive 8 bits of serial data, one start bit, one stop bit,
 // and no parity bit.  When receive is complete o_rx_dv will be
-// driven high for one clock cycle.
+// driven high for CLKS_PER_BIT clock cycles.
 // 
 // Set Parameter CLKS_PER_BIT as follows:
 // CLKS_PER_BIT = (Frequency of i_Clock)/(Frequency of UART)
@@ -100,10 +100,15 @@ module uart_rx #(
                     r_SM_Main     <= s_CLEANUP;
                 end
             end  // case: s_RX_STOP_BIT
-            // Stay here 1 clock
+            // Stay here for CLKS_PER_BIT/2 clock cycles
             s_CLEANUP: begin
-                r_SM_Main <= s_IDLE;
-                r_Rx_DV   <= 1'b0;
+                if (r_Clock_Count < CLKS_PER_BIT / 2) begin
+                    r_Clock_Count <= r_Clock_Count + 1;
+                    r_SM_Main     <= s_CLEANUP;
+                end else begin
+                    r_SM_Main <= s_IDLE;
+                    r_Rx_DV   <= 1'b0;
+                end
             end
             default: r_SM_Main <= s_IDLE;
         endcase

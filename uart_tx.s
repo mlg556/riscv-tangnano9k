@@ -12,10 +12,8 @@ UART_CTRL = 32
 
 T = 5 # delay 2**T cycles, 2**20 ~ 1M
 
-
 setup:
-    li gp, IO
-    li sp, 0
+
 loop:
     li a0, 104
     call putc
@@ -27,13 +25,18 @@ loop:
 
     j loop
 
-putc: # a0 is the 32-bit char
+# Func: serial_putc
+# Arg: a0 = character to send
+serial_putc:
+    li t0, IO
+serial_putc_loop:
+    lw t1, UART_CTRL(gp)
+    andi t1, t1, 1 # isolate bit0
+    # UART_CTRL bit0 is set => tx done
+    # so loop until done
+    beqz t1, serial_putc_loop
     # send char
     sw a0, UART_TX(gp)
-    # UART_CTRL bit0 is set => tx complete
-_l0_putc:
-    lw t1, UART_CTRL(gp)
-    beqz t1, _l0_putc
     ret
 
 putled:
