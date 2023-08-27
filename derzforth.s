@@ -15,7 +15,6 @@ tail main
 #   serial_init(a0: baud_rate)
 #   serial_getc() -> a0: char
 #   serial_putc(a0: char)
-# iinclude board.asm
 
 ################### riscv-tangnano9k ###################
 # my tangnano9k has
@@ -27,7 +26,7 @@ ROM_BASE_ADDR = 0x0000
 ROM_SIZE = 16*1024
 
 RAM_BASE_ADDR = 0x4000
-RAM_SIZE = 16*1024
+RAM_SIZE = 14*1024
 
 # additional definitions for IO and UART base addresses
 
@@ -59,7 +58,7 @@ serial_getc_loop:
     # loop until bit1 is set
     beqz t1, serial_getc_loop
     # read char
-    lb a0, UART_RX(t0)
+    lw a0, UART_RX(t0)
     ret
 
 # Func: serial_putc
@@ -391,12 +390,6 @@ interpreter_repl_char:
 
 # TODO: allow multiline word defs
 interpreter_interpret:
-    # DEBUG
-    mv t0, a0 # save a0
-    li a0, '!'
-    call serial_putc
-    mv a0, t0 # restore a0
-
     # grab the next token
     add a0, TBUF, TPOS       # a0 = buffer addr
     sub a1, TLEN, TPOS       # a1 = buffer size
