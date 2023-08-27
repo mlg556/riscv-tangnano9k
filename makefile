@@ -12,7 +12,7 @@ build:
 
 # Program Board
 load: .//impl//pnr//${PROJECT}.fs
-	openFPGALoader -b ${BOARD} ${FS} -f
+	openFPGALoader -b ${BOARD} ${FS}
 
 test: ${PROJECT}_test.o
 	vvp ${PROJECT}_test.o;

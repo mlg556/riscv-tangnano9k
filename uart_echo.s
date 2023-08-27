@@ -11,16 +11,7 @@ loop:
     call serial_getc
     call put_led
     call serial_putc
-
-    li a0, ' '
-    call serial_putc
-    li a0, 'o'
-    call serial_putc
-    li a0, 'k'
-    call serial_putc
-    li a0, '\n'
-    call serial_putc
-
+    
     j loop
 
 # Func: put_led
