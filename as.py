@@ -43,7 +43,14 @@ for i in range(0, len(code_hex), word_size):
 
 print(fname_asciihex)
 
-[print(line) for line in code]
+[print(f"{i*4}\t| {line}") for i, line in enumerate(code)]
+
+code_lines = len(code)
+code_size = code_lines * 4
+
+print(
+    f"{fname_asciihex} | {code_lines} lines | {code_size} B | {(code_size/1024):.2f} KB"
+)
 
 with open(fname_asciihex, "w+") as f:
     for line in code:
