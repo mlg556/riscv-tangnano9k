@@ -1,4 +1,4 @@
-IO = 0x400000
+IO_BASE = 0x400000
 LEDS = 4
 UART_TX = 8
 UART_RX = 16
@@ -11,20 +11,30 @@ loop:
     call serial_getc
     call put_led
     call serial_putc
+
+    li a0, ' '
+    call serial_putc
+    li a0, 'o'
+    call serial_putc
+    li a0, 'k'
+    call serial_putc
+    li a0, '\n'
+    call serial_putc
+
     j loop
 
 # Func: put_led
 # Arg: a0 = value to print to leds
 
 put_led:
-    li t0, IO
+    li t0, IO_BASE
     sw a0, LEDS(t0)
     ret
 
 # Func: serial_getc
 # Ret: a0 = character received
 serial_getc:
-    li t0, IO
+    li t0, IO_BASE
 serial_getc_loop:
     lw t1, UART_CTRL(t0)
     andi t1, t1, UART_CTRL_RX_DONE # isolate bit1
@@ -38,7 +48,7 @@ serial_getc_loop:
 # Func: serial_putc
 # Arg: a0 = character to send
 serial_putc:
-    li t0, IO
+    li t0, IO_BASE
     # send char
     sw a0, UART_TX(t0)
 
