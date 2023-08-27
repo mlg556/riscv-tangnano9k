@@ -10,7 +10,12 @@ module Memory (
     input      [ 3:0] mem_wmask   // masks for writing the 4 bytes (1=write byte) 
 );
 
-    reg [31:0] MEM[0:1535];  // 1536 4-bytes words = 6 Kb of RAM in total
+    // 8192 4-bytes words => 32768 B = 32KB (RAM + ROM)
+    // thus:
+    // [0x0000 => 0x3FFF] ROM
+    // [0x4000 => 0x7FFF] RAM
+
+    reg [31:0] MEM[0:8_191];
     initial begin
         $readmemh("uart_echo_ascii.hex", MEM);
     end
