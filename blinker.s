@@ -1,12 +1,17 @@
 # Simple blinker
-# assemble: riscv64-unknown-elf-as -march=rv32i -mabi=ilp32 -mno-relax blinker.s -o blinker.o
-# compile: riscv64-unknown-elf-ld --gc-sections -S blinker.o -o blinker.bram.elf -T bram.ld -m elf32lriscv -nostdlib --no-relax
-# tohex: riscv64-unknown-elf-objcopy -O verilog blinker.bram.elf blinker.v
+# assemble: riscv32-unknown-elf-as -march=rv32i -mabi=ilp32 -mno-relax blinker.s -o blinker.o
+# compile: riscv32-unknown-elf-ld -S blinker.o -o blinker.bram.elf -T bram.ld -m elf32lriscv -nostdlib --no-relax
+# tohex: riscv32-unknown-elf-objcopy -O verilog blinker.bram.elf blinker.v
+# dump: riscv32-unknown-elf-objdump -S blinker.o 
 
 start:
 	li a0, 0
+	li a1, 1
+	li a2, 2
 loop:
 	addi a0, a0, 1
+	addi a1, a1, 2
+	addi a2, a2, 3
 	j loop
 
 
