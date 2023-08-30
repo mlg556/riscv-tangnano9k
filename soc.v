@@ -79,56 +79,56 @@ module Processor (
     // See the table P. 105 in RISC-V manual
 
     // The 10 RISC-V instructions
-    wire        isALUreg = (opcode == 7'b0110011);  // rd <- rs1 OP rs2   
-    wire        isALUimm = (opcode == 7'b0010011);  // rd <- rs1 OP Iimm
-    wire        isBranch = (opcode == 7'b1100011);  // if(rs1 OP rs2) PC<-PC+Bimm
-    wire        isJALR = (opcode == 7'b1100111);  // rd <- PC+4; PC<-rs1+Iimm
-    wire        isJAL = (opcode == 7'b1101111);  // rd <- PC+4; PC<-PC+Jimm
-    wire        isAUIPC = (opcode == 7'b0010111);  // rd <- PC + Uimm
-    wire        isLUI = (opcode == 7'b0110111);  // rd <- Uimm   
-    wire        isLoad = (opcode == 7'b0000011);  // rd <- mem[rs1+Iimm]
-    wire        isStore = (opcode == 7'b0100011);  // mem[rs1+Simm] <- rs2
-    wire        isSYSTEM = (opcode == 7'b1110011);  // special
+    wire        OPC_REG = (opcode == 7'b0110011);  // rd <- rs1 OP rs2   
+    wire        OPC_IMM = (opcode == 7'b0010011);  // rd <- rs1 OP I_imm
+    wire        OPC_BRANCH = (opcode == 7'b1100011);  // if(rs1 OP rs2) PC<-PC+B_imm
+    wire        OPC_JALR = (opcode == 7'b1100111);  // rd <- PC+4; PC<-rs1+I_imm
+    wire        OPC_JAL = (opcode == 7'b1101111);  // rd <- PC+4; PC<-PC+J_imm
+    wire        OPC_AUIPC = (opcode == 7'b0010111);  // rd <- PC + U_imm
+    wire        OPC_LUI = (opcode == 7'b0110111);  // rd <- U_imm   
+    wire        OPC_LOAD = (opcode == 7'b0000011);  // rd <- mem[rs1+I_imm]
+    wire        OPC_STORE = (opcode == 7'b0100011);  // mem[rs1+S_imm] <- rs2
+    wire        OPC_SYS = (opcode == 7'b1110011);  // special
 
     // immediate fields
-    wire [31:0] Iimm = sext12(instr[31:20]);
-    wire [31:0] Simm = sext12({instr[31:25], instr[11:7]});
-    wire [31:0] Bimm = sext12({instr[31], instr[7], instr[30:25], instr[11:8], 1'b0});
-    wire [31:0] Uimm = {instr[31:12], {12{1'b0}}};
-    wire [31:0] Jimm = sext20({instr[31], instr[19:12], instr[20], instr[30:21], 1'b0});
+    wire [31:0] I_imm = sext12(instr[31:20]);
+    wire [31:0] S_imm = sext12({instr[31:25], instr[11:7]});
+    wire [31:0] B_imm = sext12({instr[31], instr[7], instr[30:25], instr[11:8], 1'b0});
+    wire [31:0] U_imm = {instr[31:12], {12{1'b0}}};
+    wire [31:0] J_imm = sext20({instr[31], instr[19:12], instr[20], instr[30:21], 1'b0});
 
     // Source and destination registers
-    wire [ 4:0] rs1Id = instr[19:15];
-    wire [ 4:0] rs2Id = instr[24:20];
-    wire [ 4:0] rdId = instr[11:7];
+    wire [ 4:0] rs1_id = instr[19:15];
+    wire [ 4:0] rs2_id = instr[24:20];
+    wire [ 4:0] rd_id = instr[11:7];
 
     // function codes
     wire [ 2:0] funct3 = instr[14:12];
     wire [ 6:0] funct7 = instr[31:25];
 
     // The registers bank
-    reg  [31:0] RegisterBank                                                            [0:31];
+    reg  [31:0] RA                                                                       [0:31];
     reg  [31:0] rs1;  // value of source
     reg  [31:0] rs2;  //  registers.
-    wire [31:0] writeBackData;  // data to be written to rd
-    wire        writeBackEn;  // asserted if data should be written to rd
+    wire [31:0] wb_data;  // data to be written to rd
+    wire        wb_en;  // asserted if data should be written to rd
 
 `ifdef BENCH
     integer i;
     initial begin
         for (i = 0; i < 32; i++) begin
-            RegisterBank[i] = 0;
+            RA[i] = 0;
         end
 
-        $monitor("PC: %d", PC);
+        //$monitor("PC: %d", PC);
     end
 `endif
 
     // The ALU
     wire [31:0] aluIn1 = rs1;
-    wire [31:0] aluIn2 = isALUreg ? rs2 : Iimm;
+    wire [31:0] aluIn2 = OPC_REG ? rs2 : I_imm;
     reg  [31:0] aluOut;
-    wire [ 4:0] shamt = isALUreg ? rs2[4:0] : instr[24:20];  // shift amount
+    wire [ 4:0] shamt = OPC_REG ? rs2[4:0] : instr[24:20];  // shift amount
 
     // ADD/SUB/ADDI: 
     // funct7[5] is 1 for SUB and 0 for ADD. We need also to test instr[5]
@@ -165,26 +165,24 @@ module Processor (
     end
 
 
-
-
     // next PC
-    wire [31:0] nextPC = (isBranch && takeBranch) ? PC+Bimm  :	       
-   	                isJAL                    ? PC+Jimm  :
-	                isJALR                   ? rs1+Iimm :
+    wire [31:0] nextPC = (OPC_BRANCH && takeBranch) ? PC+B_imm  :	       
+   	                OPC_JAL                    ? PC+J_imm  :
+	                OPC_JALR                   ? rs1+I_imm :
 	                PC+4;
-    wire [31:0] loadstore_addr = rs1 + (isStore ? Simm : Iimm);
+    wire [31:0] loadstore_addr = rs1 + (OPC_STORE ? S_imm : I_imm);
 
 
     // register write back
-    assign writeBackData = (isJAL || isJALR) ? PC+4   :
-			      isLUI         ? Uimm      :
-			      isAUIPC       ? PC+Uimm :
-			      isLoad        ? LOAD_data :
+    assign wb_data = (OPC_JAL || OPC_JALR) ? PC+4   :
+			      OPC_LUI         ? U_imm      :
+			      OPC_AUIPC       ? PC+U_imm :
+			      OPC_LOAD        ? LOAD_data :
 			                      aluOut;
 
     // this one just for display ---.
     //                              v
-    assign writeBackEn = (state==EXECUTE && !isBranch && !isStore && !isLoad) ||
+    assign wb_en = (state==EXECUTE && !OPC_BRANCH && !OPC_STORE && !OPC_LOAD) ||
 			(state==WAIT_DATA) ;
 
 
@@ -255,8 +253,8 @@ module Processor (
             PC    <= 0;
             state <= FETCH_INSTR;
         end else begin
-            if (writeBackEn && rdId != 0) begin
-                RegisterBank[rdId] <= writeBackData;
+            if (wb_en && rd_id != 0) begin
+                RA[rd_id] <= wb_data;
             end
             case (state)
                 FETCH_INSTR: begin
@@ -267,17 +265,17 @@ module Processor (
                     state <= FETCH_REGS;
                 end
                 FETCH_REGS: begin
-                    rs1   <= RegisterBank[rs1Id];
-                    rs2   <= RegisterBank[rs2Id];
+                    rs1   <= RA[rs1_id];
+                    rs2   <= RA[rs2_id];
                     state <= EXECUTE;
                 end
                 EXECUTE: begin
-                    if (!isSYSTEM) begin
+                    if (!OPC_SYS) begin
                         PC <= nextPC;
                     end
-                    state <= isLoad ? LOAD : isStore ? STORE : FETCH_INSTR;
+                    state <= OPC_LOAD ? LOAD : OPC_STORE ? STORE : FETCH_INSTR;
                     // `ifdef BENCH
-                    //if (isSYSTEM) $finish();
+                    //if (OPC_SYS) $finish();
                     // `endif
                 end
                 LOAD: begin
