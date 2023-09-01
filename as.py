@@ -1,72 +1,97 @@
-# basically a wrapper around bronzebeard
+# riscv32-unknown-elf
+# assemble: riscv32-unknown-elf-as -march=rv32i -mabi=ilp32 -mno-relax blinker.s -o blinker.o
+# link: riscv32-unknown-elf-ld -S blinker.o -o blinker.bram.elf -T bram.ld -m elf32lriscv -nostdlib --no-relax
+# tohex: riscv32-unknown-elf-elf2hex --bit-width 32 --input blinker.elf --output blinker.hex
+# dump: riscv32-unknown-elf-objdump -S blinker.o
 
-from subprocess import Popen, PIPE
-from sys import argv, exit
-from binascii import hexlify
+
+from sys import argv
+from subprocess import check_output
+
+LD = "bram.ld"
 
 
 fname = argv[1]
-# fname = "fib.S"
+# fname = "blinker.s"
+
+
 fname_woext = fname.split(".")[0]
+fname_o = fname_woext + ".o"
+fname_elf = fname_woext + ".elf"
+fname_hex = fname_woext + "_ascii.hex"
 
-fname_hex = f"{fname_woext}.hex"
-fname_asciihex = f"{fname_woext}_ascii.hex"
-fname_asciidighex = f"{fname_woext}_asciidig.hex"
-fname_v = f"{fname_woext}.v"
-
-cmd = Popen(
-    ["bronzebeard", fname, "-o", fname_hex],
-    stdin=PIPE,
-    stdout=PIPE,
-    stderr=PIPE,
-    shell=True,
+# assemble start.s
+cmd_as = check_output(
+    [
+        "riscv32-unknown-elf-as",
+        "-march=rv32i",
+        "-mabi=ilp32",
+        "-mno-relax",
+        "start.s",
+        "-o",
+        "start.o",
+    ]
 )
 
-_, err = cmd.communicate(b"")
+if cmd_as:
+    print(cmd_as.decode())
 
-if err:
-    print(err.decode())
-    exit(0)
-
-code_hex = []
-
-with open(fname_hex, "rb") as f:
-    code_hex = f.read()
-
-code = []
-
-word_size = 4
-for i in range(0, len(code_hex), word_size):
-    word = code_hex[i : i + word_size]
-    word = word[::-1]
-    code.append(hexlify(word).decode())
-
-print(fname_asciihex)
-
-[print(f"{i*4}\t| {line}") for i, line in enumerate(code)]
-
-code_lines = len(code)
-code_size = code_lines * 4
-
-print(
-    f"{fname_asciihex} | {code_lines} lines | {code_size} B | {(code_size/1024):.2f} KB"
+# assemble
+# riscv32-unknown-elf-as -march=rv32i -mabi=ilp32 -mno-relax blinker.s -o blinker.o
+cmd_as = check_output(
+    [
+        "riscv32-unknown-elf-as",
+        "-march=rv32i",
+        "-mabi=ilp32",
+        "-mno-relax",
+        fname,
+        "-o",
+        fname_o,
+    ]
 )
 
-with open(fname_asciihex, "w+") as f:
-    for line in code:
-        f.write(line + "\n")
+if cmd_as:
+    print(cmd_as.decode())
 
-# # used with neeman's Digital simulator
-# with open(fname_asciidighex, "w+") as f:
-#     f.write("v2.0 raw\n")
-#     for line in code:
-#         f.write(line + "\n")
+# link
+# riscv32-unknown-elf-ld -S blinker.o -o blinker.bram.elf -T bram.ld -m elf32lriscv -nostdlib --no-relax
+cmd_ld = check_output(
+    [
+        "riscv32-unknown-elf-ld",
+        "-S",
+        fname_o,
+        "-o",
+        fname_elf,
+        "-T",
+        LD,
+        "-m",
+        "elf32lriscv",
+        "-nostdlib",
+        "--no-relax",
+    ]
+)
 
-# # used for hardcoding into verilog file
-# with open(fname_v, "w+") as f:
-#     f.write("task LOADMEM;\n")
-#     f.write("\tbegin\n")
-#     for i, line in enumerate(code):
-#         f.write(f"\t\tMEM[{i}] = 32'h{line};\n")
-#     f.write("\tend\n")
-#     f.write("endtask\n")
+if cmd_ld:
+    print(cmd_ld.decode())
+
+# to hex
+# riscv32-unknown-elf-elf2hex --bit-width 32 --input blinker.elf --output blinker.hex
+cmd_hex = check_output(
+    [
+        "riscv32-unknown-elf-elf2hex",
+        "--bit-width",
+        "32",
+        "--input",
+        fname_elf,
+        "--output",
+        fname_hex,
+    ]
+)
+
+if cmd_hex:
+    print(cmd_hex.decode())
+
+cmd_dump = check_output(["riscv32-unknown-elf-objdump", "-S", fname_elf])
+
+if cmd_dump:
+    print(cmd_dump.decode())
