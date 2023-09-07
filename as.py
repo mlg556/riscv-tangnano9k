@@ -9,11 +9,14 @@ from sys import argv
 from subprocess import check_output
 
 LD = "bram.ld"
+EM = "elf32lriscv"
+PRE = "riscv32-unknown-elf"
+ARCH = "rv32i"
+ABI = "ilp32"
 
 
 fname = argv[1]
 # fname = "blinker.s"
-
 
 fname_woext = fname.split(".")[0]
 fname_o = fname_woext + ".o"
@@ -23,9 +26,9 @@ fname_hex = fname_woext + "_ascii.hex"
 # assemble start.s
 cmd_as = check_output(
     [
-        "riscv32-unknown-elf-as",
-        "-march=rv32i",
-        "-mabi=ilp32",
+        f"{PRE}-as",
+        f"-march={ARCH}",
+        f"-mabi={ABI}",
         "-mno-relax",
         "start.s",
         "-o",
@@ -40,9 +43,9 @@ if cmd_as:
 # riscv32-unknown-elf-as -march=rv32i -mabi=ilp32 -mno-relax blinker.s -o blinker.o
 cmd_as = check_output(
     [
-        "riscv32-unknown-elf-as",
-        "-march=rv32i",
-        "-mabi=ilp32",
+        f"{PRE}-as",
+        f"-march={ARCH}",
+        f"-mabi={ABI}",
         "-mno-relax",
         fname,
         "-o",
@@ -57,7 +60,7 @@ if cmd_as:
 # riscv32-unknown-elf-ld -S blinker.o -o blinker.bram.elf -T bram.ld -m elf32lriscv -nostdlib --no-relax
 cmd_ld = check_output(
     [
-        "riscv32-unknown-elf-ld",
+        f"{PRE}-ld",
         "-S",
         fname_o,
         "-o",
@@ -65,7 +68,7 @@ cmd_ld = check_output(
         "-T",
         LD,
         "-m",
-        "elf32lriscv",
+        f"{EM}",
         "-nostdlib",
         "--no-relax",
     ]
@@ -78,7 +81,7 @@ if cmd_ld:
 # riscv32-unknown-elf-elf2hex --bit-width 32 --input blinker.elf --output blinker.hex
 cmd_hex = check_output(
     [
-        "riscv32-unknown-elf-elf2hex",
+        f"{PRE}-elf2hex",
         "--bit-width",
         "32",
         "--input",
@@ -91,7 +94,7 @@ cmd_hex = check_output(
 if cmd_hex:
     print(cmd_hex.decode())
 
-cmd_dump = check_output(["riscv32-unknown-elf-objdump", "-S", fname_elf])
+cmd_dump = check_output([f"{PRE}-objdump", "-S", fname_elf])
 
 if cmd_dump:
     print(cmd_dump.decode())
