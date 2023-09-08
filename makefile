@@ -13,7 +13,7 @@ build: ${FS} ${PROJECT}.v
 
 # Program Board
 load: ${FS} ${PROJECT}.v
-	sudo openFPGALoader -b ${BOARD} ${FS}
+	sudo openFPGALoader -b ${BOARD} ${FS} -f
 
 test: ${PROJECT}_test.o
 	vvp ${PROJECT}_test.o;
