@@ -1,28 +1,30 @@
 BOARD=tangnano9k
 FAMILY=GW1N-9C
 DEVICE=GW1NR-LV9QN88PC6/I5
-PROJECT=soc
-# GW_SH=C:\Gowin\Gowin_V1.9.8.11_Education\IDE\bin\gw_sh
-GW_SH="/home/oolon/gowin-ide/bin/gw_sh"
-FS=./impl/pnr/${PROJECT}.fs
+GW_SH=C:\Gowin\Gowin_V1.9.8.11_Education\IDE\bin\gw_sh # windows
+GW_PRG=C:\Gowin\Gowin_V1.9.8.11_Education\Programmer\bin\programmer_cli.exe
 
-all: ${FS} ${BOARD}.cst ${PROJECT}.v
+# GW_SH="/home/oolon/gowin-ide/bin/gw_sh" # linux
+FS=${CURDIR}/impl/pnr/soc.fs
 
-build: ${FS} ${PROJECT}.v
+build: soc.v
 	${GW_SH} run.tcl
 
-# Program Board
-load: ${FS} ${PROJECT}.v
-	sudo openFPGALoader -b ${BOARD} ${FS} -f
+# Program Board, add -f for flash
+#	sudo openFPGALoader -b ${BOARD} ${FS} # linux
+# ${GW_PRG} -f ${FS} -r 2 -d GW1N-9C
 
-test: ${PROJECT}_test.o
-	vvp ${PROJECT}_test.o;
+load: ${FS} soc.v
+	${GW_PRG} -f ${FS} -r 2 -d GW1N-9C
 
-${PROJECT}_test.o: ${PROJECT}.v ${PROJECT}_tb.v
-	iverilog -DBENCH -o ${PROJECT}_test.o ${PROJECT}.v ${PROJECT}_tb.v
+test: soc_test.o
+	vvp soc_test.o;
 
-view: ${PROJECT}_tb.vcd
-	gtkwave ${PROJECT}_tb.vcd
+soc_test.o: soc.v soc_tb.v
+	iverilog -DBENCH -o soc_test.o soc.v soc_tb.v
+
+view: soc_tb.vcd
+	gtkwave soc_tb.vcd
 
 # Cleanup build artifacts, del for windows cmd.exe
 clean:
