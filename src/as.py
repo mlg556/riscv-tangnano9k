@@ -6,7 +6,6 @@ from binascii import hexlify
 
 
 fname = argv[1]
-# fname = "fib.S"
 fname_woext = fname.split(".")[0]
 
 fname_hex = f"{fname_woext}.hex"

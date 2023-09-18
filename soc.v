@@ -18,7 +18,7 @@ module Memory (
 
     reg [31:0] MEM[0:8_191];
     initial begin
-        $readmemh("src/blinker.hex", MEM);
+        $readmemh("src/derzforth_ascii.hex", MEM);
     end
 
     wire [29:0] word_addr = mem_addr[31:2];

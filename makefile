@@ -14,8 +14,9 @@ build: soc.v
 #	sudo openFPGALoader -b ${BOARD} ${FS} # linux
 # ${GW_PRG} -f ${FS} -r 2 -d GW1N-9C
 
+# -r 2 for SRAM, -r 6 for embeddedflash erase,program,verify
 load: ${FS} soc.v
-	${GW_PRG} -f ${FS} -r 2 -d GW1N-9C
+	${GW_PRG} -f ${FS} -r 5 -d GW1N-9C
 
 test: soc_test.o
 	vvp soc_test.o;
