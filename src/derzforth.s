@@ -250,7 +250,7 @@ djb2_hash_loop:
     # replace this mul with a loop for RV32I compatibility
     # mul t0, t0, t1      # h = h * 33
     slli t1, t0, 5 # t1 = t0 * 32
-    add t0, t1, t0 # t0 = t2 + t0, in effect t0 = (t0 * 32) + t0
+    add t0, t1, t0 # t0 = t1 + t0, in effect t0 = (t0 * 32) + t0
     # -------
     add t0, t0, t2      # h = h + c
     addi a0, a0, 1      # addr += 1
@@ -368,7 +368,7 @@ interpreter_skip_comment:
     call serial_putc
 
     # skip char until newline is found
-    li t0, '\r'                           # newlines start with \r
+    li t0, '\n'                           # newlines start with \n
     bne a0, t0, interpreter_skip_comment  # loop back to SKIP comment unless newline
     j interpreter_repl
 
@@ -388,7 +388,7 @@ interpreter_repl_char:
     bge TLEN, t1, error  # bounds check on TBUF
     sb a0, 0(t0)         # write char into TBUF
     addi TLEN, TLEN, 1   # TLEN += 1
-    addi t0, zero, '\r'  # t0 = newline char
+    addi t0, zero, '\n'  # t0 = newline char
     beq a0, t0, interpreter_interpret  # interpret the input upon newline
     j interpreter_repl
 
