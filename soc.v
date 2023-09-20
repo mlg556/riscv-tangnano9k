@@ -14,11 +14,10 @@ module Memory (
     // maybe:
     // [0x0000 => 0x3FFF] ROM
     // [0x4000 => 0x7FFF] RAM
-    // C:\Gowin\Gowin_V1.9.8.11_Education\Programmer\bin\programmer_cli.exe -r 2 -f .\impl\pnr\soc.fs -d GW1N-9C
 
     reg [31:0] MEM[0:8_191];
     initial begin
-        $readmemh("src/derzforth_ascii.hex", MEM);
+        $readmemh("src/blinker.hex", MEM);
     end
 
     wire [29:0] word_addr = mem_addr[31:2];
