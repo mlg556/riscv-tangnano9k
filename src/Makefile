@@ -18,21 +18,23 @@ elf2hex = $(RV)-elf2hex
 objdump = $(RV)-objdump
 objcopy = $(RV)-objcopy
 
+
 ARCH = rv32i
 ABI = ilp32
 EMU = elf32lriscv
+LSCRIPT = bram.ld
 LIBC = /opt/riscv32i/riscv32-unknown-elf/lib/libm_nano.a
 
 GCC_WARNS  = -Werror -Wall -Wextra -Wshadow -Wundef -Wpointer-arith -Wcast-qual -Wcast-align -Wwrite-strings
 GCC_WARNS += -Wredundant-decls -Wstrict-prototypes -Wmissing-prototypes -pedantic # -Wconversion
 
-# make start.o from start.s
-start.o: start.s
-	$(gcc) -c -march=$(ARCH) -mabi=$(ABI) -mno-relax -o $@ $<
+# # make start.o from start.s
+# start.o: start.s
+# 	$(gcc) -c -march=$(ARCH) -mabi=$(ABI) -mno-relax -o $@ $<
 
-# make putchar.o from putchar.s
-putchar.o: putchar.s
-	$(gcc) -c -march=$(ARCH) -mabi=$(ABI) -mno-relax -o $@ $<
+# # make putchar.o from putchar.s
+# putchar.o: putchar.s
+# 	$(gcc) -c -march=$(ARCH) -mabi=$(ABI) -mno-relax -o $@ $<
 
 # # make print.o from print.c
 # print.o: print.c
@@ -53,11 +55,11 @@ putchar.o: putchar.s
 # 		$< putchar.o
 
 # # link
-%.elf: %.o start.o putchar.o bram.ld
-	$(ld) $< putchar.o -o $@ -T bram.ld -m $(EMU) -nostdlib --no-relax --print-memory-usage
+%.elf: %.o start.o put.o $(LSCRIPT)
+	$(ld) $< put.o -o $@ -T $(LSCRIPT) -m $(EMU) -nostdlib --no-relax --print-memory-usage
 
 %.lst: %.elf
-	$(objdump) --disassembler-color=extended --visualize-jumps=color -S $<
+	$(objdump) --disassembler-color=extended --visualize-jumps=color -dS $<
 
 %.bin: %.elf
 	$(objcopy) $< -O binary $@

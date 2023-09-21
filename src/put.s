@@ -10,6 +10,7 @@
 .section .text
 .globl putchar
 
+
 # remember gp is already loaded with IO_BASE
 
 # Func: putchar
@@ -25,3 +26,18 @@ putchar:
     # so loop until done
     beqz t0, .L0
     ret
+
+.globl putstring
+
+putstring:
+	addi sp,sp,-4 # save ra on the stack
+	sw ra,0(sp)   # (need to do that for functions that call functions)
+	mv t2,a0	
+.L2:    lbu a0,0(t2)
+	beqz a0,.L3
+	call putchar
+	addi t2,t2,1	
+	j .L2
+.L3:    lw ra,0(sp)  # restore ra
+	addi sp,sp,4 # resptore sp
+	ret

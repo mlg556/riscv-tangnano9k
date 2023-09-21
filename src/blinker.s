@@ -11,13 +11,13 @@ main:
 .L0:
     li  t0, 5
 	sw  t0, IO_LEDS(gp)
-	li  a0, 104 # h
-    call putchar
+	la  a0, hello
+    call putstring
 	call    wait
 	li  t0, 10
 	sw  t0, IO_LEDS(gp)
-    li  a0, 105 # i
-    call putchar
+	la  a0, hello
+    call putstring
 	call    wait
 	j   .L0
 
@@ -28,3 +28,8 @@ wait:
 	addi    t0,t0,-1
 	bnez    t0, .L1
 	ret
+
+.section .data
+hello:
+	.asciz "Hello, world !\n"
+
