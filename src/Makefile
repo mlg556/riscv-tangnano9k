@@ -34,30 +34,30 @@ start.o: start.s
 putchar.o: putchar.s
 	$(gcc) -c -march=$(ARCH) -mabi=$(ABI) -mno-relax -o $@ $<
 
-# make print.o from print.c
-print.o: print.c
-	$(gcc) -c -march=$(ARCH) -mabi=$(ABI) -Os --std=c99 $(GCC_WARNS) -ffreestanding -nostdlib -mno-relax -fno-stack-protector -o $@ $<
+# # make print.o from print.c
+# print.o: print.c
+# 	$(gcc) -c -march=$(ARCH) -mabi=$(ABI) -Os --std=c99 $(GCC_WARNS) -ffreestanding -nostdlib -mno-relax -fno-stack-protector -o $@ $<
 
 # assemble .s file
 %.o: %.s
 	$(gcc) -c -march=$(ARCH) -mabi=$(ABI) -mno-relax -o $@ $<
 
-# compile .c files
-%.o: %.c
-	$(gcc) -c -march=$(ARCH) -mabi=$(ABI) -Os --std=c99 $(GCC_WARNS) -ffreestanding -nostdlib -mno-relax -fno-stack-protector -o $@ $<
+# # compile .c files
+# %.o: %.c
+# 	$(gcc) -c -march=$(ARCH) -mabi=$(ABI) -Os --std=c99 $(GCC_WARNS) -ffreestanding -nostdlib -mno-relax -fno-stack-protector -o $@ $<
 
 # link
-%.elf: %.o start.o putchar.o bram.ld
-	$(gcc) -Os -march=$(ARCH) -mabi=$(ABI) -ffreestanding -nostdlib -mno-relax -o $@ \
-		-Wl,--build-id=none,-Bstatic,-T,bram.ld,--strip-debug \
-		$< putchar.o
+# %.elf: %.o start.o putchar.o bram.ld
+# 	$(gcc) -Os -march=$(ARCH) -mabi=$(ABI) -ffreestanding -nostdlib -mno-relax -o $@ \
+# 		-Wl,--build-id=none,-Bstatic,-T,bram.ld,--strip-debug --print-memory-usage \
+# 		$< putchar.o
 
 # # link
-# %.elf: %.o start.o putchar.o
-# 	$(ld) $< putchar.o -o $@ -T $(script) -m $(EMU) -nostdlib --no-relax --print-memory-usage
+%.elf: %.o start.o putchar.o bram.ld
+	$(ld) $< putchar.o -o $@ -T bram.ld -m $(EMU) -nostdlib --no-relax --print-memory-usage
 
 %.lst: %.elf
-	$(objdump) -S $<
+	$(objdump) --disassembler-color=extended --visualize-jumps=color -S $<
 
 %.bin: %.elf
 	$(objcopy) $< -O binary $@

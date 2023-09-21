@@ -8,6 +8,6 @@ SECTIONS
     {
 	. = ALIGN(4);
 	start.o (.text)
-        *(.*)
+    *(.text)
     } >BRAM
 }
