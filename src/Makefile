@@ -27,14 +27,21 @@ ABI = ilp32
 EMU = elf32lriscv
 LSCRIPT = bram.ld
 
+# GCC_WARNS  = -Werror -Wall -Wextra -Wshadow -Wundef -Wpointer-arith -Wcast-qual -Wcast-align -Wwrite-strings
+# GCC_WARNS += -Wredundant-decls -Wstrict-prototypes -Wmissing-prototypes -pedantic # -Wconversion
 
-GCC_WARNS  = -Werror -Wall -Wextra -Wshadow -Wundef -Wpointer-arith -Wcast-qual -Wcast-align -Wwrite-strings
-GCC_WARNS += -Wredundant-decls -Wstrict-prototypes -Wmissing-prototypes -pedantic # -Wconversion
+RVCFLAGS=$(OPTIMIZE) $(RVINCS) $(DEVICES) -fno-pic -march=$(ARCH) -mabi=$(ABI) \
+         -fno-stack-protector -w -Wl,--no-relax 
 
 # assemble .s file
 %.o: %.s
 	$(gcc) -c -march=$(ARCH) -mabi=$(ABI) -mno-relax -o $@ $<
 
+%.o: %.c
+	$(gcc) -c -march=$(ARCH) -mabi=$(ABI) -O0 -mno-relax --std=c99 -ffreestanding -nostdlib -o $@ $<
+
+
+# $(TOOLCHAIN_PREFIX)gcc -c -mabi=ilp32 -march=rv32i$(subst C,c,$(COMPRESSED_ISA)) -Os --std=c99 $(GCC_WARNS) -ffreestanding -nostdlib -o $@ $<
 # # link
 %.elf: %.o start.o put.o $(LSCRIPT)
 	$(ld) $< put.o -o $@ -T $(LSCRIPT) -m $(EMU) -nostdlib --no-relax --print-memory-usage -S

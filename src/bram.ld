@@ -9,6 +9,8 @@ SECTIONS
         . = ALIGN(4);
         start.o (.text*)
         *(.text*)
+        *(.rodata*) 
+        *(.srodata*)
 
     } > BRAM
 
@@ -17,8 +19,9 @@ SECTIONS
         *(.sdata*)
     } > BRAM
 
-    /*.bss : {
-        *(.bss*)
-        *(.sbss*)
-    } >RAM*/
+    .bss : {
+      *(.bss*)
+      *(.sbss*)
+    } > BRAM
+
 }
