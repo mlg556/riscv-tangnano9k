@@ -3,12 +3,12 @@ FAMILY=GW1N-9C
 DEVICE=GW1NR-LV9QN88PC6/I5
 
 # GOWIN locations
-ifeq ($(p), win) # windows
-	GW_SH=C:\Gowin\Gowin_V1.9.8.11_Education\IDE\bin\gw_sh
-	GW_PRG=C:\Gowin\Gowin_V1.9.8.11_Education\Programmer\bin\programmer_cli.exe
-else
+ifeq ($(p), lin) # linux
 	GW_SH=/home/oolon/Gowin/IDE/bin/gw_sh
 	GW_PRG=/home/oolon/Gowin/Programmer/bin/programmer_cli
+else # windows
+	GW_SH=C:\Gowin\Gowin_V1.9.8.11_Education\IDE\bin\gw_sh
+	GW_PRG=C:\Gowin\Gowin_V1.9.8.11_Education\Programmer\bin\programmer_cli.exe
 endif
 
 FS=${CURDIR}/impl/pnr/soc.fs
@@ -18,20 +18,22 @@ build: ${FS} soc.v
 
 
 load: soc.v
-ifeq ($(p), win) # windows
-		${GW_PRG} -f ${FS} -r 2 -d ${FAMILY}
-else
+ifeq ($(p), lin) # linux
 		/home/oolon/oss-cad-suite/bin/openFPGALoader -b ${BOARD} ${FS}
+else
+		${GW_PRG} -f ${FS} -r 2 -d ${FAMILY}
 endif
 
 # load to flash
 loadf: soc.v
-ifeq ($(p), win) # windows
-		${GW_PRG} -f ${FS} -r 5 -d ${FAMILY}
-else
+ifeq ($(p), lin) # linux
 		/home/oolon/oss-cad-suite/bin/openFPGALoader -f -b ${BOARD} ${FS}
+else
+		${GW_PRG} -f ${FS} -r 5 -d ${FAMILY}
 endif	
 
+monitor:
+	python -m serial.tools.miniterm COM21 115200 --eol LF
 
 test: soc_test.o
 	vvp soc_test.o;

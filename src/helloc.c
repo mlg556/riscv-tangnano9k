@@ -1,9 +1,10 @@
-void putstring(const char* s);
+#include <stdio.h>
+
 void sleep(int x);
 
 int main(void) {
     for (;;) {
-        putstring("Hello world\n");
+        printf("Hello world\n");
         sleep(10000);
     }
     return 0;

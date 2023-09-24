@@ -8,9 +8,9 @@ UART_CTRL_TX_DONE = 1
 UART_CTRL_RX_DONE = 2
 
 loop:
-    call serial_getc
+    call uart_get
     call put_led
-    call serial_putc
+    call uart_put
     
     j loop
 
@@ -22,31 +22,31 @@ put_led:
     sw a0, LEDS(t0)
     ret
 
-# Func: serial_getc
+# Func: uart_get
 # Ret: a0 = character received
-serial_getc:
+uart_get:
     li t0, IO_BASE
-serial_getc_loop:
+uart_get_loop:
     lw t1, UART_CTRL(t0)
     andi t1, t1, UART_CTRL_RX_DONE # isolate bit1
     # UART_CTRL bit1 is set => rx done
     # so loop until done
-    beqz t1, serial_getc_loop
+    beqz t1, uart_get_loop
     # read char
     lb a0, UART_RX(t0)
     ret
 
-# Func: serial_putc
+# Func: uart_put
 # Arg: a0 = character to send
-serial_putc:
+uart_put:
     li t0, IO_BASE
     # send char
     sw a0, UART_TX(t0)
 
-serial_putc_loop:
+uart_put_loop:
     lw t1, UART_CTRL(t0)
     andi t1, t1, UART_CTRL_TX_DONE # isolate bit0
     # UART_CTRL bit0 is set => tx done
     # so loop until done
-    beqz t1, serial_putc_loop
+    beqz t1, uart_put_loop
     ret
