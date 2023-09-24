@@ -1,12 +1,6 @@
-#include <stdarg.h>
+#include "tang.h"
 
-void print_string(const char* s);
-int puts(const char* s);
-void print_dec(int val);
-void print_hex(unsigned int val);
-void print_hex_digits(unsigned int val, int nbdigits);
-int printf(const char* fmt, ...);
-void putchar(const char c);
+#include <stdarg.h>
 
 void print_string(const char* s) {
     for (const char* p = s; *p; ++p) {

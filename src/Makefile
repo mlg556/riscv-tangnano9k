@@ -24,12 +24,12 @@ objcopy := $(RV)-objcopy
 ARCH := rv32i
 ABI := ilp32
 EMU := elf32lriscv
-LINKSCRIPT := bram.ld
+LINKSCRIPT := ram.ld
 
 # GCC_WARNS  = -Werror -Wall -Wextra -Wshadow -Wundef -Wpointer-arith -Wcast-qual -Wcast-align -Wwrite-strings
 # GCC_WARNS += -Wredundant-decls -Wstrict-prototypes -Wmissing-prototypes -pedantic # -Wconversion
 
-LIBOBJECTS := putchar.o print.o
+LIBOBJECTS := tang.o io.o
 
 # assemble .s file
 %.o: %.s

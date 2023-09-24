@@ -1,7 +1,7 @@
-/* everything is stored in BRAM. first code, then data*/
+/* everything is stored in RAM. first code, then data*/
 MEMORY
 {
-   BRAM (RWX) : ORIGIN = 0x0000, LENGTH = 0x8000  /* 32kB RAM */
+   RAM (RWX) : ORIGIN = 0x0000, LENGTH = 0x8000  /* 32kB RAM */
 }
 SECTIONS
 {
@@ -12,16 +12,16 @@ SECTIONS
         *(.rodata*) 
         *(.srodata*)
 
-    } > BRAM
+    } > RAM
 
     .data : {
         *(.data*)
         *(.sdata*)
-    } > BRAM
+    } > RAM
 
     .bss : {
       *(.bss*)
       *(.sbss*)
-    } > BRAM
+    } > RAM
 
 }
