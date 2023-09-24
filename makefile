@@ -13,7 +13,11 @@ endif
 
 FS=${CURDIR}/impl/pnr/soc.fs
 
-build: ${FS} soc.v
+all: build load monitor
+
+allf: build loadf monitor
+
+build: soc.v
 	${GW_SH} run.tcl
 
 
