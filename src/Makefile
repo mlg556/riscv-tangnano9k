@@ -4,6 +4,11 @@
 # tohex: riscv32-unknown-elf-elf2hex --bit-width 32 --input blinker.elf --output blinker.hex
 # dump: riscv32-unknown-elf-objdump -S blinker.o
 
+# GCC
+# LIBC := C:\xpack-riscv-none-elf-gcc\lib\gcc\riscv-none-elf\13.2.0\rv32i\ilp32\libgcc.a
+# others? C:\xpack-riscv-none-elf-gcc\riscv-none-elf\lib\rv32i\ilp32\libg.a
+
+
 # toolchain paths etc...
 # windows
 ifeq ($(p), lin) # linux
@@ -11,7 +16,7 @@ ifeq ($(p), lin) # linux
 	PY := python3
 else
 	RV := C:\xpack-riscv-none-elf-gcc\bin\riscv-none-elf
-	LIBC := C:\xpack-riscv-none-elf-gcc\lib\gcc\riscv-none-elf\13.2.0\rv32i\ilp32\libgcc.a
+	LIBC := C:\xpack-riscv-none-elf-gcc\lib\gcc\riscv-none-elf\13.2.0\rv32i\ilp32\libgcc.a 
 	PY := python
 endif
 
@@ -29,19 +34,19 @@ LINKSCRIPT := ram.ld
 # GCC_WARNS  = -Werror -Wall -Wextra -Wshadow -Wundef -Wpointer-arith -Wcast-qual -Wcast-align -Wwrite-strings
 # GCC_WARNS += -Wredundant-decls -Wstrict-prototypes -Wmissing-prototypes -pedantic # -Wconversion
 
-LIBOBJECTS := tang.o io.o
+LIBOBJECTS := tang.o io.o strcmp.o strcpy.o strlen.o memmove.o memcmp.o random.o
 
 # assemble .s file
 %.o: %.s
 	$(gcc) -c -march=$(ARCH) -mabi=$(ABI) -mno-relax -o $@ $<
 
 %.o: %.c
-	$(gcc) -c -march=$(ARCH) -mabi=$(ABI) -O0 -mno-relax --std=c99 -ffreestanding -nostdlib -o $@ $<
+	$(gcc) -c -march=$(ARCH) -mabi=$(ABI) -Os -mno-relax --std=c99 -ffreestanding -o $@ $<
 
 # $(TOOLCHAIN_PREFIX)gcc -c -mabi=ilp32 -march=rv32i$(subst C,c,$(COMPRESSED_ISA)) -Os --std=c99 $(GCC_WARNS) -ffreestanding -nostdlib -o $@ $<
 # # link
 %.elf: %.o start.o $(LIBOBJECTS) $(LINKSCRIPT)
-	$(ld) $< $(LIBOBJECTS) $(LIBC) -T $(LINKSCRIPT) -m $(EMU) -nostdlib --no-relax --print-memory-usage -S -o $@
+	$(ld) $< $(LIBOBJECTS) $(LIBC) -T $(LINKSCRIPT) -m $(EMU) --no-relax --print-memory-usage -S -o $@
 
 %.lst: %.elf
 	$(objdump) --disassembler-color=extended --visualize-jumps=color -dS $<
