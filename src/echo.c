@@ -5,6 +5,8 @@ char c;
 int main(void) {
     for (;;) {
         c = getchar();
-        printf("%c\n", c);
+        // to upper case
+        c -= 32;
+        printf("%c", c);
     }
 }
