@@ -11,14 +11,9 @@
 
 # toolchain paths etc...
 # windows
-ifeq ($(p), lin) # linux
-	RV := riscv32-unknown-elf
-	PY := python3
-else
-	RV := C:\xpack-riscv-none-elf-gcc\bin\riscv-none-elf
-	LIBC := C:\xpack-riscv-none-elf-gcc\lib\gcc\riscv-none-elf\13.2.0\rv32i\ilp32\libgcc.a 
-	PY := python
-endif
+RV := C:\dev\xpack-riscv-none-elf-gcc\bin\riscv-none-elf
+LIBC := C:\dev\xpack-riscv-none-elf-gcc\lib\gcc\riscv-none-elf\13.2.0\rv32i\ilp32\libgcc.a 
+PY := python
 
 gcc := $(RV)-gcc
 ld := $(RV)-ld
@@ -34,7 +29,7 @@ LINKSCRIPT := ram.ld
 # GCC_WARNS  = -Werror -Wall -Wextra -Wshadow -Wundef -Wpointer-arith -Wcast-qual -Wcast-align -Wwrite-strings
 # GCC_WARNS += -Wredundant-decls -Wstrict-prototypes -Wmissing-prototypes -pedantic # -Wconversion
 
-LIBOBJECTS := tang.o io.o strcmp.o strcpy.o strlen.o memmove.o memcmp.o random.o
+LIBOBJECTS := tang.o io.o
 
 # assemble .s file
 %.o: %.s
