@@ -1,5 +1,7 @@
 // C:\Users\mirac\Documents\fpga\mini-rv32ima\windows\mini-rv32ima.exe
 
+// https://www.ringtailsoftware.co.uk/zig-baremetal/
+
 //const std = @import("std");
 
 const SYSCON_REG_ADDR: usize = 0x11100000;

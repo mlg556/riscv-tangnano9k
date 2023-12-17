@@ -40,29 +40,18 @@ pub fn build(b: *std.Build) void {
     });
 
     exe.setLinkerScript(.{ .path = "src/linker.ld" });
-    exe.strip = false;
+    exe.strip = true;
 
     // _ = exe.installRaw("hello.bin", .{});
 
     // This declares intent for the executable to be installed into the
     // standard location when the user invokes the "install" step (the default
     // step when running `zig build`).
-    b.installArtifact(exe);
+    // b.installArtifact(exe);
 
-    // This *creates* a Run step in the build graph, to be executed when another
-    // step is evaluated that depends on it. The next line below will establish
-    // such a dependency.
-    const run_cmd = b.addRunArtifact(exe);
+    b.installBinFile("zig-out/bin/hello", "hello.bin");
 
-    // By making the run step depend on the install step, it will be run from the
-    // installation directory rather than directly from within the cache directory.
-    // This is not necessary, however, if the application depends on other installed
-    // files, this ensures they will be present and in the expected location.
-    run_cmd.step.dependOn(b.getInstallStep());
+    // _ = b.addInstallBinFile(elf.getOutputSource(), "bin");
 
-    // This allows the user to pass arguments to the application in the build
-    // command itself, like this: `zig build run -- arg1 arg2 etc`
-    if (b.args) |args| {
-        run_cmd.addArgs(args);
-    }
+    // elf.installRaw("hello.bin", .{});
 }
