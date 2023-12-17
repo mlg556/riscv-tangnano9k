@@ -4,21 +4,29 @@
 #include <stdbool.h>
 
 // gets a string ending with newline
-char* gets(char* s) {
-    char* ch = s;
-    int k;
+void gets(char* s) {
+    char c;
+    int i = 0;
 
-    /* until we read a newline */
-    while ((k = getchar()) != '\n') {
-        /* character is stored at address, and pointer is incremented */
-        *ch++ = k;
+    while (c != '\n') {
+        c    = getchar();
+        s[i] = c;
+        i += 1;
     }
+    // char* ch = s;
+    // int k;
 
-    /* add the newline back */
-    *ch = '\n';
+    // /* until we read a newline */
+    // while ((k = getchar()) != '\n') {
+    //     /* character is stored at address, and pointer is incremented */
+    //     *ch++ = k;
+    // }
 
-    /* return original pointer */
-    return s;
+    // /* add the newline back */
+    // *ch = '\n';
+
+    // /* return original pointer */
+    // return s;
 }
 
 void print_string(const char* s) {
@@ -43,7 +51,7 @@ void print_dec(int val) {
     }
     while (val || p == buffer) {
         *(p++) = val % 10;
-        val = val / 10;
+        val    = val / 10;
     }
     while (p != buffer) {
         putchar('0' + *(--p));

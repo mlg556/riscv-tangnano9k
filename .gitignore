@@ -4,5 +4,7 @@
 **/*.fs
 **/*.history
 **/*.elf
+
+**/zig-cache
 /impl
 

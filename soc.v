@@ -17,7 +17,7 @@ module Memory (
 
     reg [31:0] MEM[0:8_191];
     initial begin
-        $readmemh("src/echo.hex", MEM);
+        $readmemh("src/liner.hex", MEM);
     end
 
     wire [29:0] word_addr = mem_addr[31:2];
