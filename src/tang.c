@@ -8,26 +8,15 @@ void gets(char* s) {
     char c;
     int i = 0;
 
-    while (c != '\n') {
-        c    = getchar();
+    while (true) {
+        c = getchar();
+        if (c == '\n')
+            break;
         s[i] = c;
         i += 1;
+        sleep(5);
     }
-    // char* ch = s;
-    // int k;
-
-    // /* until we read a newline */
-    // while ((k = getchar()) != '\n') {
-    //     /* character is stored at address, and pointer is incremented */
-    //     *ch++ = k;
-    // }
-
-    // /* add the newline back */
-    // *ch = '\n';
-
-    // /* return original pointer */
-    // return s;
-}
+};
 
 void print_string(const char* s) {
     for (const char* p = s; *p; ++p) {
